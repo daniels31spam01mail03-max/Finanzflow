@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F6E56">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinanzFlow">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FinanzFlow</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+:root{--g:#1D9E75;--gd:#0F6E56;--gl:#E1F5EE;--r:#D85A30;--rl:#FAECE7;--b:#3B7DD8;--o:#E08A2A;--pu:#8B5CF6;--bg:#F5F5F0;--s:#fff;--s2:#F0EFE9;--bd:rgba(0,0,0,.08);--bd2:rgba(0,0,0,.14);--t:#1A1A18;--t2:#6B6B66;--t3:#9A9A94;--rad:16px;--rads:10px}
+@media(prefers-color-scheme:dark){:root{--bg:#111110;--s:#1C1C1A;--s2:#242422;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.14);--t:#F0EFE8;--t2:#9A9A94;--t3:#6B6B66;--gl:#0a2e22;--rl:#2e150c}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;background:var(--bg);color:var(--t);max-width:480px;margin:0 auto;position:relative}
+.app{position:fixed;top:0;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── PIN ── */
+.pin-screen{position:fixed;inset:0;background:var(--s);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:32px 24px;max-width:480px;margin:0 auto}
+.pin-logo{font-size:26px;font-weight:700;letter-spacing:-.6px}
+.pin-logo span{color:var(--g)}
+.pin-title{font-size:17px;font-weight:600;margin:20px 0 6px;text-align:center}
+.pin-sub{font-size:13px;color:var(--t2);text-align:center;line-height:1.6;margin-bottom:32px;max-width:280px}
+.pin-dots{display:flex;gap:16px;margin-bottom:40px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd2);background:transparent;transition:all .15s}
+.pin-dot.filled{background:var(--g);border-color:var(--g)}
+.pin-dot.err{background:var(--r);border-color:var(--r)}
+.pin-kp{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
+.pk{aspect-ratio:1;border-radius:50%;border:.5px solid var(--bd2);background:var(--s2);font-size:22px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--t);display:flex;align-items:center;justify-content:center;transition:all .1s;user-select:none}
+.pk:active{transform:scale(.92);background:var(--g);color:#fff;border-color:var(--g)}
+.pk.empty{background:transparent;border:none;cursor:default}
+.pin-err{font-size:13px;color:var(--r);margin-top:16px;text-align:center;min-height:20px}
+.pin-link{margin-top:20px;background:none;border:none;font-size:13px;color:var(--t3);cursor:pointer;font-family:inherit;text-decoration:underline}
+
+/* ── LAYOUT ── */
+.hdr{background:var(--s);border-bottom:.5px solid var(--bd);padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0;z-index:10}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px}
+.logo{font-size:19px;font-weight:700;letter-spacing:-.6px}
+.logo span{color:var(--g)}
+.period{font-size:12px;font-weight:500;color:var(--t2);background:var(--s2);padding:5px 12px;border-radius:20px;border:.5px solid var(--bd)}
+.fbar{display:flex;gap:7px;padding:10px 16px 12px;overflow-x:auto;scrollbar-width:none;align-items:center}
+.fbar::-webkit-scrollbar{display:none}
+.chip{border:.5px solid var(--bd2);background:var(--s2);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;color:var(--t2);transition:all .15s;flex-shrink:0;-webkit-appearance:none;appearance:none;font-family:inherit}
+.chip.active{background:var(--g);border-color:var(--g);color:#fff}
+select.chip{padding-right:10px}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 100px;display:flex;flex-direction:column;gap:12px;min-height:0;height:0}
+
+/* ── SUMMARY ── */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sumcard{background:var(--s);border:.5px solid var(--bd);border-radius:var(--rad);padding:16px;cursor:pointer;transition:transform .1s;user-select:none}
+.sumcard:active{transform:scale(.97)}
+.sumcard.inc{border-left:3px solid var(--g)}
+.sumcard.exp{border-left:3px solid var(--r)}
+.sumlbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);margin-bottom:8px}
+.sumamt{font-size:20px;font-weight:700;letter-spacing:-.8px;line-height:1}
+.green{color:var(--g)}.red{color:var(--r)}.blue{color:var(--b)}.orange{color:var(--o)}
+.sumhint{font-size:10px;color:var(--t3);margin-top:6px}
+.saldocard{background:var(--g);border-radius:var(--rad);padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
+.saldo-l{font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+.saldo-a{font-size:26px;font-weight:700;color:#fff;letter-spacing:-1px}
+.saldo-s{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+
+/* ── CARD ── */
+.card{background:var(--s);border:.5px solid var(--bd);border-radius:var(--rad);overflow:hidden}
+.cardhdr{padding:14px 16px;border-bottom:.5px solid var(--bd);display:flex;align-items:center;gap:10px}
+.cardhdr-t{font-size:13px;font-weight:600;flex:1}
+.cardhdr-a{font-size:15px;font-weight:700}
+.backbtn{background:var(--s2);border:.5px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;font-family:inherit}
+
+/* ── LIST ── */
+.litem{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:.5px solid var(--bd);cursor:pointer;transition:background .1s;user-select:none}
+.litem:last-child{border-bottom:none}
+.litem:active{background:var(--s2)}
+.lico{width:36px;height:36px;border-radius:10px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.linf{flex:1;overflow:hidden;min-width:0}
+.lname{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsub{font-size:11px;color:var(--t2);margin-top:2px}
+.lright{text-align:right;flex-shrink:0}
+.lamt{font-size:14px;font-weight:600}
+.lpct{font-size:10px;color:var(--t3);margin-top:2px}
+.larr{font-size:14px;color:var(--t3);margin-left:4px}
+.bwrap{padding:0 16px 10px}
+.bbg{height:3px;background:var(--s2);border-radius:2px}
+.bfill{height:3px;border-radius:2px;transition:width .4s}
+.bfill.green{background:var(--g)}
+.bfill.red{background:var(--r)}
+
+/* ── TX ITEMS ── */
+.txitem{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:.5px solid var(--bd);cursor:pointer;transition:background .1s}
+.txitem:last-child{border-bottom:none}
+.txitem:active{background:var(--s2)}
+.txico{width:34px;height:34px;border-radius:9px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.txinf{flex:1;min-width:0}
+.txname{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.txdate{font-size:11px;color:var(--t2);margin-top:1px}
+.txamt{font-size:13px;font-weight:600;flex-shrink:0}
+.txcat{font-size:10px;color:var(--t3);margin-top:1px}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:44px 24px}
+.empty-ico{font-size:52px;margin-bottom:14px}
+.empty-title{font-size:17px;font-weight:600;margin-bottom:8px}
+.empty-sub{font-size:13px;color:var(--t2);line-height:1.6}
+
+/* ── UPLOAD ── */
+.uzone{border:1.5px dashed var(--bd2);border-radius:var(--rad);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s)}
+.uzone.hasfile{border-color:var(--g);background:var(--gl)}
+.uzico{font-size:40px;margin-bottom:12px}
+.uztitle{font-size:15px;font-weight:600;margin-bottom:4px}
+.uzsub{font-size:12px;color:var(--t2)}
+.btn{width:100%;padding:15px;border-radius:var(--rads);border:none;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s}
+.btn-sec{background:var(--s);border:.5px solid var(--bd2);color:var(--t)}
+.btn-pri{background:var(--g);color:#fff}
+.btn-pri:active{background:var(--gd)}
+.errbox{background:var(--rl);border:.5px solid var(--r);border-radius:var(--rads);padding:12px 14px;font-size:13px;color:var(--r);line-height:1.5}
+.seclbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:0 4px;margin-bottom:6px}
+.stmtcard{background:var(--s);border:.5px solid var(--bd);border-radius:var(--rads);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.stmtdel{background:var(--rl);border:.5px solid var(--r);border-radius:8px;padding:6px 10px;font-size:15px;cursor:pointer;color:var(--r)}
+
+/* ── LOADING ── */
+.loadcard{background:var(--s);border:.5px solid var(--bd);border-radius:var(--rad);padding:40px 24px;text-align:center}
+.spinner{width:40px;height:40px;border:2.5px solid var(--bd2);border-top-color:var(--g);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── NAV ── */
+.bnav{position:absolute;bottom:0;left:0;right:0;background:var(--s);border-top:.5px solid var(--bd);display:flex;padding-bottom:env(safe-area-inset-bottom,0);z-index:10}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--t3);font-size:10px;font-weight:500;transition:color .15s}
+.nbtn.active{color:var(--g)}
+.nbico{font-size:20px}
+
+/* ── OVERLAY / DIALOG ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:150}
+.dlg{background:var(--s);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0));width:100%;max-width:480px;max-height:80vh;overflow-y:auto}
+.dlg-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.dlg-sub{font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5}
+.dlg-btns{display:flex;gap:10px;margin-top:16px}
+.dlg-btn{flex:1;padding:13px;border-radius:var(--rads);border:none;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.dlg-btn.cancel{background:var(--s2);color:var(--t);border:.5px solid var(--bd2)}
+.dlg-btn.danger{background:var(--r);color:#fff}
+.dlg-btn.ok{background:var(--g);color:#fff}
+
+/* ── CATEGORY PICKER ── */
+.catpick-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:.5px solid var(--bd);cursor:pointer}
+.catpick-item:last-child{border-bottom:none}
+.catpick-item:active{opacity:.7}
+.catpick-ico{font-size:18px;width:28px;text-align:center}
+.catpick-name{font-size:14px;font-weight:500;flex:1}
+.catpick-arrow{font-size:14px;color:var(--t3)}
+.catpick-check{font-size:16px;color:var(--g)}
+
+/* ── ANALYTICS ── */
+.acchip{border:.5px solid var(--bd2);background:var(--s2);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:500;cursor:pointer;color:var(--t2);transition:all .15s;white-space:nowrap}
+.acchip.sel0{background:var(--g);border-color:var(--g);color:#fff}
+.acchip.sel1{background:var(--b);border-color:var(--b);color:#fff}
+.acchip.sel2{background:var(--o);border-color:var(--o);color:#fff}
+
+/* ── INPUT ── */
+.inp{width:100%;padding:12px 14px;border-radius:10px;border:.5px solid var(--bd2);background:var(--s2);color:var(--t);font-size:14px;font-family:inherit;outline:none}
+.inp:focus{border-color:var(--g)}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────
+// STORAGE
+// ─────────────────────────────────────────────
+const SK={DATA:'ff_d4',FILTER:'ff_f4',PIN:'ff_pin4',API:'ff_api',LOCK:'ff_lock4',RULES:'ff_rules4',CATS:'ff_cats4'};
+function ld(k,def){try{const v=JSON.parse(localStorage.getItem(k));return v??def}catch{return def}}
+function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
+
+// ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
+const MS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const ML=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const CCOL=['var(--g)','var(--b)','var(--o)'];
+
+// Default categories tree: {name, icon, subs:[{name,icon}]}
+const DEFAULT_CATS=[
+  {name:'Essen & Trinken',icon:'🍽️',subs:[{name:'Supermarkt',icon:'🛒'},{name:'Fastfood',icon:'🍔'},{name:'Restaurant',icon:'🍜'},{name:'Bäckerei',icon:'🥐'},{name:'Kantine',icon:'🏢'},{name:'Lieferservice',icon:'🛵'}]},
+  {name:'Transport',icon:'🚗',subs:[{name:'Tanken',icon:'⛽'},{name:'ÖPNV',icon:'🚆'},{name:'Parken',icon:'🅿️'},{name:'Autobahn',icon:'🛣️'},{name:'Taxi',icon:'🚕'}]},
+  {name:'Shopping',icon:'🛍️',subs:[{name:'Kleidung',icon:'👕'},{name:'Elektronik',icon:'💻'},{name:'Online-Shopping',icon:'📦'},{name:'Haushalt',icon:'🏡'},{name:'Drogerie',icon:'🧴'}]},
+  {name:'Gesundheit',icon:'💊',subs:[{name:'Apotheke',icon:'💊'},{name:'Arzt',icon:'🏥'},{name:'Fitness',icon:'🏋️'}]},
+  {name:'Freizeit',icon:'🎮',subs:[{name:'Streaming',icon:'📺'},{name:'Kino',icon:'🎬'},{name:'Bar & Nightlife',icon:'🍻'},{name:'Hobbys',icon:'🎯'},{name:'Reisen',icon:'✈️'}]},
+  {name:'Wohnen',icon:'🏠',subs:[{name:'Miete',icon:'🔑'},{name:'Nebenkosten',icon:'💡'},{name:'Versicherung',icon:'🛡️'},{name:'Internet',icon:'📡'},{name:'GEZ',icon:'📻'}]},
+  {name:'Finanzen',icon:'💳',subs:[{name:'Sparen',icon:'🏦'},{name:'Investitionen',icon:'📈'},{name:'Gebühren',icon:'💸'},{name:'Kredit',icon:'🏦'}]},
+  {name:'Einnahmen',icon:'💚',subs:[{name:'Gehalt',icon:'💼'},{name:'Nebeneinkommen',icon:'💡'},{name:'Erstattung',icon:'↩️'},{name:'Sonstige Einnahmen',icon:'💰'}]},
+  {name:'Sonstiges',icon:'📋',subs:[]},
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+const NOW=new Date();
+let S={
+  tab:'home',
+  filter:ld(SK.FILTER,{mode:'month',year:NOW.getFullYear(),month:NOW.getMonth()+1}),
+  data:ld(SK.DATA,{statements:[],transactions:[]}),
+  customCats:ld(SK.CATS,[]),   // [{name,icon,parent}] — parent=null means top-level
+  rules:ld(SK.RULES,[]),       // [{match:'fisherman',category:'Angeln',subcategory:'Angelbedarf'}]
+  navStack:[],
+  // upload
+  pFile:null,pName:null,analyzing:false,error:null,
+  confirmDel:null,
+  // PIN
+  pinMode:null,pinIn:'',pinFirst:'',pinAttempts:0,
+  pinLock:parseInt(localStorage.getItem(SK.LOCK)||'0'),
+  pinErr:'',pinReset:false,
+  // analytics
+  aFilter:ld(SK.FILTER,{mode:'month',year:NOW.getFullYear(),month:NOW.getMonth()+1}),
+  selCats:[],
+  // recategorize dialog
+  reTx:null,        // transaction being recategorized
+  reStep:'top',     // 'top' | 'sub' | 'confirm'
+  reSelTop:null,
+  reSub:null,
+  reApplyAll:true,
+  // new category dialog
+  newCatParent:null, // null=top-level, string=parent name
+  newCatName:'',
+  newCatIcon:'📋',
+  showNewCat:false,
+};
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function fmt(n){return(n<0?'−':'')+Math.abs(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
+function fmtP(n){return Math.abs(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
+
+// Build full category tree (default + custom)
+function getCatTree(){
+  const tree=DEFAULT_CATS.map(c=>({...c,subs:[...c.subs]}));
+  S.customCats.forEach(cc=>{
+    if(!cc.parent){
+      if(!tree.find(t=>t.name===cc.name)) tree.push({name:cc.name,icon:cc.icon||'📋',subs:[]});
+    } else {
+      const parent=tree.find(t=>t.name===cc.parent);
+      if(parent&&!parent.subs.find(s=>s.name===cc.name)) parent.subs.push({name:cc.name,icon:cc.icon||'📋'});
+    }
+  });
+  return tree;
+}
+
+function ico(name){
+  if(!name)return'📋';
+  const tree=getCatTree();
+  for(const c of tree){
+    if(c.name===name)return c.icon;
+    for(const s of c.subs)if(s.name===name)return s.icon;
+  }
+  return'📋';
+}
+
+// Apply learned rules to a transaction description
+function applyRules(desc){
+  const d=(desc||'').toLowerCase();
+  for(const rule of S.rules){
+    if(d.includes(rule.match.toLowerCase())) return{category:rule.category,subcategory:rule.subcategory};
+  }
+  return null;
+}
+
+// Apply rules to all transactions (after adding new rule)
+function reapplyRules(){
+  S.data.transactions.forEach(tx=>{
+    if(tx.manualCat) return; // don't touch manually set ones
+    const r=applyRules(tx.description);
+    if(r){tx.category=r.category;tx.subcategory=r.subcategory;}
+  });
+  sv(SK.DATA,S.data);
+}
+
+// Filter transactions by current filter
+function filTx(txList,f){
+  const{mode,year,month,fromYear,fromMonth,toYear,toMonth}=f;
+  return txList.filter(tx=>{
+    const d=new Date(tx.date);if(!d||isNaN(d))return false;
+    const y=d.getFullYear(),m=d.getMonth()+1;
+    if(mode==='month')return y===year&&m===month;
+    if(mode==='year')return y===year;
+    if(mode==='range'){const n=y*12+m,fn=(fromYear||year)*12+(fromMonth||1),tn=(toYear||year)*12+(toMonth||12);return n>=fn&&n<=tn}
+    return true;
+  });
+}
+function getTx(){return filTx(S.data.transactions,S.filter)}
+function calc(list){let i=0,e=0;list.forEach(tx=>{if(tx.amount>0)i+=tx.amount;else e+=Math.abs(tx.amount)});return{income:i,expense:e}}
+function grpBy(list,type){
+  const sign=type==='income'?1:-1,items=list.filter(tx=>sign*tx.amount>0),cats={};
+  items.forEach(tx=>{
+    const c=tx.category||'Sonstiges',s=tx.subcategory||c;
+    if(!cats[c])cats[c]={name:c,amount:0,subs:{},txCount:0};
+    cats[c].amount+=Math.abs(tx.amount);cats[c].txCount++;
+    if(!cats[c].subs[s])cats[c].subs[s]={name:s,amount:0,txs:[]};
+    cats[c].subs[s].amount+=Math.abs(tx.amount);cats[c].subs[s].txs.push(tx);
+  });
+  return Object.values(cats).sort((a,b)=>b.amount-a.amount);
+}
+function flbl(f){
+  const{mode,year,month,fromYear,fromMonth,toYear,toMonth}=f||S.filter;
+  if(mode==='month')return`${ML[month-1]} ${year}`;if(mode==='year')return`Jahr ${year}`;
+  if(mode==='range')return`${MS[(fromMonth||1)-1]} ${fromYear} – ${MS[(toMonth||12)-1]} ${toYear}`;return'Alle';
+}
+function curNav(){return S.navStack.length?S.navStack[S.navStack.length-1]:{view:'home'}}
+function push(e){S.navStack.push(e)}function pop(){S.navStack.pop()}
+function allUsedCats(){const c=new Set();S.data.transactions.forEach(tx=>{if(tx.category)c.add(tx.category);if(tx.subcategory&&tx.subcategory!==tx.category)c.add(tx.subcategory)});return Array.from(c).sort()}
+function latSaldo(){if(!S.data.statements.length)return null;const ws=S.data.statements.filter(s=>s.endSaldo!=null);if(!ws.length)return null;ws.sort((a,b)=>new Date(b.uploadedAt)-new Date(a.uploadedAt));return ws[0]}
+function mkYears(){const c=new Date().getFullYear(),y=[];for(let i=c;i>=c-4;i--)y.push(i);return y}
+function selOpts(arr,val,lbl){return arr.map(v=>`<option value="${v}" ${val===v?'selected':''}>${lbl?lbl(v):v}</option>`).join('')}
+
+// ─────────────────────────────────────────────
+// PIN
+// ─────────────────────────────────────────────
+function hasPin(){return!!localStorage.getItem(SK.PIN)}
+function checkPin(p){return localStorage.getItem(SK.PIN)===p}
+function setPin(p){localStorage.setItem(SK.PIN,p)}
+function clearAll(){[SK.DATA,SK.FILTER,SK.PIN,SK.LOCK,SK.RULES,SK.CATS].forEach(k=>localStorage.removeItem(k));S.data={statements:[],transactions:[]};S.customCats=[];S.rules=[];S.navStack=[]}
+
+function initPin(){
+  if(!hasPin()){S.pinMode='setup';S.pinIn=''}
+  else{const now=Date.now();S.pinLock>now?S.pinMode='locked':(S.pinMode='unlock',S.pinIn='')}
+}
+initPin();
+function unlocked(){return S.pinMode===null}
+
+function handlePK(k){
+  if(S.pinMode==='locked')return;
+  if(Date.now()<S.pinLock){S.pinMode='locked';render();return}
+  if(k==='del'){S.pinIn=S.pinIn.slice(0,-1);S.pinErr='';render();return}
+  if(S.pinIn.length>=4)return;
+  S.pinIn+=k;
+  if(S.pinIn.length===4){
+    setTimeout(()=>{
+      if(S.pinMode==='unlock'){
+        if(checkPin(S.pinIn)){S.pinMode=null;S.pinAttempts=0;S.pinLock=0;localStorage.removeItem(SK.LOCK);S.pinIn=''}
+        else{
+          S.pinAttempts++;
+          if(S.pinAttempts>=5){const u=Date.now()+300000;S.pinLock=u;localStorage.setItem(SK.LOCK,String(u));S.pinMode='locked';S.pinIn=''}
+          else{S.pinErr=`Falscher PIN. Noch ${5-S.pinAttempts} Versuch${5-S.pinAttempts===1?'':'e'}.`;S.pinIn=''}
+        }
+      }else if(S.pinMode==='setup'){S.pinFirst=S.pinIn;S.pinIn='';S.pinMode='setup2';S.pinErr=''}
+      else if(S.pinMode==='setup2'){
+        if(S.pinIn===S.pinFirst){setPin(S.pinIn);S.pinMode=null;S.pinIn='';S.pinErr=''}
+        else{S.pinErr='PINs stimmen nicht überein.';S.pinIn='';S.pinMode='setup';S.pinFirst=''}
+      }
+      render();
+    },80);
+  }else render();
+}
+
+// ─────────────────────────────────────────────
+// RENDER MAIN
+// ─────────────────────────────────────────────
+function render(){
+  const app=document.getElementById('app');if(!app)return;
+  if(!unlocked()){app.innerHTML=rPin();bindPin();return}
+  const txList=getTx(),sum=calc(txList),nav=curNav();
+  let content='';
+  if(S.tab==='home'){
+    if(nav.view==='home')content=rHome(txList,sum);
+    else if(nav.view==='categories')content=rCats(txList,sum,nav);
+    else if(nav.view==='subcategories')content=rSubs(txList,nav);
+    else if(nav.view==='transactions')content=rTxList(txList,nav);
+  }else if(S.tab==='analytics')content=rAnalytics();
+  else if(S.tab==='upload')content=rUpload();
+  else if(S.tab==='settings')content=rSettings();
+
+  const dialogs=[
+    S.confirmDel?rDlgDel():'',
+    S.pinReset?rDlgPinReset():'',
+    S.reTx?rDlgReCat():'',
+    S.showNewCat?rDlgNewCat():'',
+  ].join('');
+
+  app.innerHTML=`${rHdr()}
+    <div class="scroll">${content}</div>
+    ${rNav()}${dialogs}`;
+  bindAll();
+}
+
+// ─────────────────────────────────────────────
+// PIN SCREEN
+// ─────────────────────────────────────────────
+function rPin(){
+  const locked=Date.now()<S.pinLock;
+  const rem=locked?Math.ceil((S.pinLock-Date.now())/1000):0;
+  const mins=Math.floor(rem/60),secs=rem%60;
+  let title='',sub='',showKP=true;
+  if(S.pinMode==='setup'){title='PIN festlegen';sub='Wähle einen 4-stelligen PIN zum Schutz deiner Finanzdaten.\n\n⚠️ Bei vergessenem PIN können deine Buchungsdaten zurückgesetzt werden.'}
+  else if(S.pinMode==='setup2'){title='PIN bestätigen';sub='Gib den PIN nochmal ein.'}
+  else if(S.pinMode==='unlock'){title='PIN eingeben';sub='Gib deinen PIN ein.'}
+  else{title='Gesperrt';sub=`Bitte warte ${mins}:${secs.toString().padStart(2,'0')} Minuten.`;showKP=false}
+  const dots=[0,1,2,3].map(i=>`<div class="pin-dot ${S.pinIn.length>i?(S.pinErr?'err':'filled'):''}"></div>`).join('');
+  return`<div class="pin-screen">
+    <div class="pin-logo">Finanz<span>Flow</span></div>
+    <div class="pin-title">${title}</div>
+    <div class="pin-sub">${sub.replace(/\n/g,'<br>')}</div>
+    <div class="pin-dots">${dots}</div>
+    ${showKP?`<div class="pin-kp">
+      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="pk" data-pk="${n}">${n}</button>`).join('')}
+      <button class="pk empty"></button>
+      <button class="pk" data-pk="0">0</button>
+      <button class="pk" data-pk="del">⌫</button>
+    </div>`:`<div class="spinner" style="margin:24px auto"></div>`}
+    <div class="pin-err">${S.pinErr}</div>
+    ${(S.pinMode==='unlock'&&S.pinAttempts>0)||S.pinMode==='locked'?`<button class="pin-link" id="pin-rst-btn">PIN vergessen? Daten zurücksetzen</button>`:''}
+    ${S.pinReset?rDlgPinReset():''}
+  </div>`;
+}
+function bindPin(){
+  document.querySelectorAll('[data-pk]').forEach(el=>el.addEventListener('click',()=>handlePK(el.dataset.pk)));
+  document.getElementById('pin-rst-btn')?.addEventListener('click',()=>{S.pinReset=true;render()});
+  document.getElementById('btn-rst-no')?.addEventListener('click',()=>{S.pinReset=false;render()});
+  document.getElementById('btn-rst-yes')?.addEventListener('click',()=>{clearAll();S.pinReset=false;S.pinMode='setup';S.pinIn='';S.pinFirst='';S.pinErr='';render()});
+  if(S.pinMode==='locked'){
+    const ms=Math.max(S.pinLock-Date.now(),0);
+    setTimeout(()=>{S.pinLock=0;S.pinAttempts=0;S.pinMode='unlock';localStorage.removeItem(SK.LOCK);render()},ms);
+    const iv=setInterval(()=>{if(S.pinMode==='locked')render();else clearInterval(iv)},1000);
+  }
+}
+
+// ─────────────────────────────────────────────
+// HEADER
+// ─────────────────────────────────────────────
+function rHdr(){
+  if(!unlocked())return'';
+  const f=S.filter,{mode,year,month,fromYear,fromMonth,toYear,toMonth}=f;
+  const curY=new Date().getFullYear(),curM=new Date().getMonth()+1,yrs=mkYears();
+  const showFbar=S.tab==='home';
+  let fc='';
+  if(mode==='month')fc=`<select class="chip active" id="sm">${selOpts(MS.map((_,i)=>i+1),month,i=>MS[i-1])}</select><select class="chip active" id="sy">${selOpts(yrs,year)}</select>`;
+  if(mode==='year')fc=`<select class="chip active" id="sy">${selOpts(yrs,year)}</select>`;
+  if(mode==='range')fc=`<span style="font-size:11px;color:var(--t3);flex-shrink:0">Von</span><select class="chip" id="sfm">${selOpts(MS.map((_,i)=>i+1),fromMonth||1,i=>MS[i-1])}</select><select class="chip" id="sfy">${selOpts(yrs,fromYear||curY)}</select><span style="font-size:11px;color:var(--t3);flex-shrink:0">Bis</span><select class="chip" id="stm">${selOpts(MS.map((_,i)=>i+1),toMonth||curM,i=>MS[i-1])}</select><select class="chip" id="sty">${selOpts(yrs,toYear||curY)}</select>`;
+  return`<div class="hdr">
+    <div class="hdr-inner"><div class="logo">Finanz<span>Flow</span></div><div class="period">${flbl()}</div></div>
+    ${showFbar?`<div class="fbar">
+      <button class="chip ${mode==='month'?'active':''}" data-mode="month">Monat</button>
+      <button class="chip ${mode==='year'?'active':''}" data-mode="year">Jahr</button>
+      <button class="chip ${mode==='range'?'active':''}" data-mode="range">Zeitraum</button>
+      ${fc}
+    </div>`:''}
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// HOME
+// ─────────────────────────────────────────────
+function rHome(txList,sum){
+  const nav=curNav();
+  if(nav.view==='categories')return rCats(txList,sum,nav);
+  if(nav.view==='subcategories')return rSubs(txList,nav);
+  if(nav.view==='transactions')return rTxList(txList,nav);
+  const sl=latSaldo();
+  const slbl=S.filter.mode==='month'?`Saldo Ende ${MS[S.filter.month-1]} ${S.filter.year}`:S.filter.mode==='year'?`Saldo Ende ${S.filter.year}`:'Saldo Ende des Zeitraums';
+  // Analytics preview on home
+  const cats=grpBy(txList,'expense').slice(0,5);
+  const total=sum.expense;
+  return`
+    <div class="row2">
+      <div class="sumcard inc" id="card-inc"><div class="sumlbl">Einnahmen</div><div class="sumamt green">${fmtP(sum.income)}</div><div class="sumhint">→ Details</div></div>
+      <div class="sumcard exp" id="card-exp"><div class="sumlbl">Ausgaben</div><div class="sumamt red">${fmtP(sum.expense)}</div><div class="sumhint">→ Details</div></div>
+    </div>
+    ${sl?`<div class="saldocard"><div><div class="saldo-l">${slbl}</div><div class="saldo-a">${fmt(sl.endSaldo)}</div><div class="saldo-s">${sl.name}</div></div><div style="font-size:28px;opacity:.7">${sl.endSaldo>=0?'🏦':'⚠️'}</div></div>`
+    :`<div class="saldocard"><div><div class="saldo-l">Bilanz im Zeitraum</div><div class="saldo-a">${sum.income-sum.expense>=0?'+':''}${fmt(sum.income-sum.expense)}</div><div class="saldo-s">Saldo wird aus Kontoauszug gelesen</div></div><div style="font-size:28px;opacity:.7">${sum.income>=sum.expense?'📈':'📉'}</div></div>`}
+    ${txList.length===0?`<div class="empty"><div class="empty-ico">📂</div><div class="empty-title">Noch keine Daten</div><div class="empty-sub">Lade im Tab "Hochladen" deinen ersten Kontoauszug hoch.</div></div>`:`
+    <div class="card">
+      <div class="cardhdr"><div class="cardhdr-t">Top Ausgaben</div><div style="font-size:12px;color:var(--t2)">${flbl()}</div></div>
+      ${cats.length===0?`<div style="padding:16px;text-align:center;color:var(--t2);font-size:13px">Keine Ausgaben</div>`:''}
+      ${cats.map(cat=>{const pct=total>0?(cat.amount/total*100):0;return`
+        <div class="litem" data-cat="${encodeURIComponent(cat.name)}">
+          <div class="lico">${ico(cat.name)}</div>
+          <div class="linf"><div class="lname">${cat.name}</div><div class="lsub">${cat.txCount} Buchungen</div></div>
+          <div class="lright"><div class="lamt red">${fmtP(cat.amount)}</div><div class="lpct">${pct.toFixed(1)}%</div></div>
+          <div class="larr">›</div>
+        </div>
+        <div class="bwrap"><div class="bbg"><div class="bfill red" style="width:${pct.toFixed(1)}%"></div></div></div>`;}).join('')}
+    </div>`}`;
+}
+
+// ─────────────────────────────────────────────
+// CATEGORIES / SUBS / TRANSACTIONS
+// ─────────────────────────────────────────────
+function rCats(txList,sum,nav){
+  const cats=grpBy(txList,nav.viewType),total=nav.viewType==='income'?sum.income:sum.expense,cc=nav.viewType==='income'?'green':'red';
+  return`<div class="card">
+    <div class="cardhdr"><button class="backbtn" id="btn-back">← Zurück</button><div class="cardhdr-t">${nav.viewType==='income'?'Einnahmen':'Ausgaben'}</div><div class="cardhdr-a ${cc}">${fmtP(total)}</div></div>
+    ${cats.length===0?`<div style="padding:24px;text-align:center;color:var(--t2);font-size:13px">Keine Buchungen</div>`:''}
+    ${cats.map(cat=>{const pct=total>0?(cat.amount/total*100):0,hs=Object.keys(cat.subs).length>1;return`
+      <div class="litem" data-cat="${encodeURIComponent(cat.name)}">
+        <div class="lico">${ico(cat.name)}</div><div class="linf"><div class="lname">${cat.name}</div><div class="lsub">${cat.txCount} Buchungen</div></div>
+        <div class="lright"><div class="lamt ${cc}">${fmtP(cat.amount)}</div><div class="lpct">${pct.toFixed(1)}%</div></div>
+        ${hs?'<div class="larr">›</div>':''}
+      </div>
+      <div class="bwrap"><div class="bbg"><div class="bfill ${cc}" style="width:${pct.toFixed(1)}%"></div></div></div>`;}).join('')}
+  </div>`;
+}
+
+function rSubs(txList,nav){
+  const cats=grpBy(txList,nav.viewType),cat=cats.find(c=>c.name===nav.viewCat),cc=nav.viewType==='income'?'green':'red';
+  if(!cat){pop();render();return''}
+  const subs=Object.values(cat.subs).sort((a,b)=>b.amount-a.amount);
+  return`<div class="card">
+    <div class="cardhdr"><button class="backbtn" id="btn-back">← Zurück</button><div class="cardhdr-t">${ico(cat.name)} ${cat.name}</div><div class="cardhdr-a ${cc}">${fmtP(cat.amount)}</div></div>
+    ${subs.map(sub=>{const pct=cat.amount>0?(sub.amount/cat.amount*100):0;return`
+      <div class="litem" data-sub="${encodeURIComponent(sub.name)}">
+        <div class="lico">${ico(sub.name)}</div><div class="linf"><div class="lname">${sub.name}</div><div class="lsub">${sub.txs.length} Buchungen</div></div>
+        <div class="lright"><div class="lamt ${cc}">${fmtP(sub.amount)}</div><div class="lpct">${pct.toFixed(1)}%</div></div>
+        <div class="larr">›</div>
+      </div>
+      <div class="bwrap"><div class="bbg"><div class="bfill ${cc}" style="width:${pct.toFixed(1)}%"></div></div></div>`;}).join('')}
+  </div>`;
+}
+
+function rTxList(txList,nav){
+  const cats=grpBy(txList,nav.viewType),cat=cats.find(c=>c.name===nav.viewCat),cc=nav.viewType==='income'?'green':'red';
+  if(!cat){pop();render();return''}
+  const sub=cat.subs[nav.viewSub];if(!sub){pop();render();return''}
+  return`<div class="card">
+    <div class="cardhdr">
+      <button class="backbtn" id="btn-back">← Zurück</button>
+      <div class="cardhdr-t">${ico(nav.viewSub)} ${nav.viewSub}</div>
+      <div class="cardhdr-a ${cc}">${fmtP(sub.amount)}</div>
+    </div>
+    <div style="padding:10px 16px 6px;font-size:11px;color:var(--t2)">Tippe auf eine Buchung zum Umkategorisieren</div>
+    ${[...sub.txs].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(tx=>`
+      <div class="txitem" data-txid="${tx.id}">
+        <div class="txico">${ico(tx.subcategory||tx.category)}</div>
+        <div class="txinf">
+          <div class="txname">${tx.description}</div>
+          <div class="txdate">${new Date(tx.date).toLocaleDateString('de-DE',{day:'2-digit',month:'short',year:'numeric'})}</div>
+          ${tx.manualCat?'<div class="txcat">✏️ manuell</div>':''}
+        </div>
+        <div class="txamt ${tx.amount>0?'green':'red'}">${fmt(tx.amount)}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// ANALYTICS
+// ─────────────────────────────────────────────
+function rAnalytics(){
+  const ac=allUsedCats(),f=S.aFilter;
+  const{mode,year,month,fromYear,fromMonth,toYear,toMonth}=f;
+  const curY=new Date().getFullYear(),curM=new Date().getMonth()+1,yrs=mkYears();
+  let months=[];
+  if(mode==='month')months=[{year,month,label:`${MS[month-1]} ${year}`}];
+  else if(mode==='year')for(let m=1;m<=12;m++)months.push({year,month:m,label:MS[m-1]});
+  else if(mode==='range'){
+    const fy=fromYear||curY,fm=fromMonth||1,ty2=toYear||curY,tm2=toMonth||curM;
+    let cy=fy,cm=fm;
+    while(cy*12+cm<=ty2*12+tm2&&months.length<24){months.push({year:cy,month:cm,label:`${MS[cm-1]} ${cy}`});cm++;if(cm>12){cm=1;cy++}}
+  }
+  const series=S.selCats.map((cat,idx)=>({cat,color:CCOL[idx],values:months.map(({year:y,month:m})=>{
+    const txs=S.data.transactions.filter(tx=>{const d=new Date(tx.date);return d.getFullYear()===y&&d.getMonth()+1===m&&(tx.category===cat||tx.subcategory===cat)});
+    return txs.reduce((s,tx)=>s+Math.abs(tx.amount),0);
+  })}));
+  const hasChart=series.length>0&&months.length>1;
+  let chartHtml='';
+  if(hasChart){
+    const W=320,H=150,P={t:10,r:10,b:30,l:52},cW=W-P.l-P.r,cH=H-P.t-P.b;
+    const maxV=Math.max(...series.flatMap(s=>s.values),1),yMax=Math.ceil(maxV/10)*10||10;
+    const xStep=cW/(months.length-1||1);
+    const yL=[0,.25,.5,.75,1].map(t=>{const v=yMax*t,y=H-P.b-t*cH;return`<text x="${P.l-5}" y="${y+4}" text-anchor="end" font-size="9" fill="var(--t3)">${v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0)}</text><line x1="${P.l}" y1="${y}" x2="${W-P.r}" y2="${y}" stroke="var(--bd)" stroke-width="0.5"/>`}).join('');
+    const step=Math.max(1,Math.ceil(months.length/6));
+    const xL=months.map(({label},i)=>i%step!==0&&i!==months.length-1?'': `<text x="${P.l+i*xStep}" y="${H-P.b+14}" text-anchor="middle" font-size="9" fill="var(--t3)">${label}</text>`).join('');
+    const lines=series.map(({values,color})=>{
+      const pts=values.map((v,i)=>`${P.l+i*xStep},${H-P.b-(v/yMax)*cH}`).join(' ');
+      const dots=values.map((v,i)=>`<circle cx="${P.l+i*xStep}" cy="${H-P.b-(v/yMax)*cH}" r="3" fill="${color}"/>`).join('');
+      return`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+    }).join('');
+    chartHtml=`<div style="padding:12px 16px;overflow-x:auto"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">${yL}${xL}${lines}</svg></div>`;
+  }
+  const legend=series.length?`<div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px">${series.map(({cat,color})=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px"><div style="width:10px;height:10px;border-radius:50%;background:${color}"></div>${cat}</div>`).join('')}</div>`:'';
+  let fc2='';
+  if(f.mode==='month')fc2=`<select class="chip active" id="am">${selOpts(MS.map((_,i)=>i+1),f.month||curM,i=>MS[i-1])}</select><select class="chip active" id="ay">${selOpts(yrs,f.year||curY)}</select>`;
+  if(f.mode==='year')fc2=`<select class="chip active" id="ay">${selOpts(yrs,f.year||curY)}</select>`;
+  if(f.mode==='range')fc2=`<select class="chip" id="afm">${selOpts(MS.map((_,i)=>i+1),f.fromMonth||1,i=>MS[i-1])}</select><select class="chip" id="afy">${selOpts(yrs,f.fromYear||curY)}</select><span style="font-size:11px;color:var(--t3)">bis</span><select class="chip" id="atm">${selOpts(MS.map((_,i)=>i+1),f.toMonth||curM,i=>MS[i-1])}</select><select class="chip" id="aty">${selOpts(yrs,f.toYear||curY)}</select>`;
+  return`<div class="card">
+    <div class="cardhdr"><div class="cardhdr-t">📈 Auswertung</div></div>
+    <div style="padding:12px 16px;border-bottom:.5px solid var(--bd)">
+      <div class="seclbl" style="margin-bottom:8px">Zeitraum</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <button class="chip ${f.mode==='month'?'active':''}" data-amode="month">Monat</button>
+        <button class="chip ${f.mode==='year'?'active':''}" data-amode="year">Jahr</button>
+        <button class="chip ${f.mode==='range'?'active':''}" data-amode="range">Zeitraum</button>
+        ${fc2}
+      </div>
+    </div>
+    <div style="padding:12px 16px;border-bottom:.5px solid var(--bd)">
+      <div class="seclbl" style="margin-bottom:8px">Kategorien (max. 3)</div>
+      ${ac.length===0?`<div style="font-size:13px;color:var(--t2)">Noch keine Daten.</div>`:`<div style="display:flex;flex-wrap:wrap;gap:7px">${ac.map(cat=>{const idx=S.selCats.indexOf(cat);return`<button class="acchip ${idx>=0?'sel'+idx:''}" data-acat="${encodeURIComponent(cat)}">${ico(cat)} ${cat}</button>`}).join('')}</div>`}
+    </div>
+    ${series.length===0?`<div style="padding:24px;text-align:center;color:var(--t2);font-size:13px">Wähle Kategorien aus</div>`:`
+      ${hasChart?chartHtml:''}${legend}
+      <div style="padding:0 16px 16px">
+        <div class="seclbl" style="margin:12px 0 8px">Details</div>
+        ${months.map(({year:y,month:m,label})=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--bd)">
+            <div style="font-size:13px;font-weight:500">${label}</div>
+            <div style="display:flex;gap:12px">${series.map(({values,color})=>{const idx=months.findIndex(mm=>mm.year===y&&mm.month===m);return`<div style="font-size:13px;font-weight:600;color:${color}">${fmtP(values[idx]||0)}</div>`}).join('')}</div>
+          </div>`).join('')}
+      </div>`}
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// UPLOAD
+// ─────────────────────────────────────────────
+function rUpload(){
+  if(S.analyzing)return`<div class="loadcard"><div class="spinner"></div><div style="font-size:15px;font-weight:600;margin-bottom:6px">Wird ausgewertet…</div><div style="font-size:12px;color:var(--t2);line-height:1.6">Claude liest alle Buchungen aus und kategorisiert sie. 10–30 Sekunden.</div></div>`;
+  return`
+    <div id="uzone" class="uzone ${S.pFile?'hasfile':''}">
+      <div class="uzico">${S.pFile?'✅':'📄'}</div>
+      <div class="uztitle">${S.pFile?S.pName:'Kontoauszug auswählen'}</div>
+      <div class="uzsub">${S.pFile?'Datei bereit – tippe Auswerten':'Tippe hier oder auf Button unten'}</div>
+    </div>
+    <input type="file" accept=".pdf,application/pdf" id="fi" style="display:none">
+    <button class="btn btn-sec" id="btn-sel">📁 PDF-Datei auswählen</button>
+    ${S.pFile?`<button class="btn btn-pri" id="btn-ana">Auswerten</button>`:''}
+    ${S.error?`<div class="errbox">⚠️ ${S.error}</div>`:''}
+    ${S.data.statements.length>0?`
+      <div class="seclbl">Gespeicherte Kontoauszüge (${S.data.statements.length})</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:8px;padding:0 4px">🗑️ zum Löschen tippen</div>
+      ${S.data.statements.map(s=>`<div class="stmtcard">
+        <div style="font-size:22px">📄</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">${s.txCount} Buchungen • ${new Date(s.uploadedAt).toLocaleDateString('de-DE')}${s.endSaldo!=null?' • Saldo: '+fmt(s.endSaldo):''}</div></div>
+        <button class="stmtdel" data-del="${s.id}">🗑️</button>
+      </div>`).join('')}`:`<div style="text-align:center;padding:24px;color:var(--t2);font-size:13px">Noch keine Kontoauszüge</div>`}`;
+}
+
+// ─────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────
+function rSettings(){
+  const k=localStorage.getItem(SK.API)||'';
+  const tree=getCatTree();
+  return`
+    <div class="card">
+      <div class="cardhdr"><div class="cardhdr-t">🔑 Claude API Key</div></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:12px;color:var(--t2);line-height:1.6">Hole deinen Key auf <strong>console.anthropic.com</strong> → API Keys → Create Key</div>
+        <input id="api-inp" type="password" class="inp" placeholder="sk-ant-api03-..." value="${k}">
+        <button class="btn btn-pri" id="btn-savekey">Speichern</button>
+        <div style="font-size:12px;color:${k?'var(--g)':'var(--r)'};text-align:center">${k?'✅ Gespeichert':'⚠️ Kein Key — Auswertung nicht möglich'}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cardhdr"><div class="cardhdr-t">📂 Eigene Kategorien</div><button class="backbtn" id="btn-newcat-top" style="background:var(--g);color:#fff;border-color:var(--g)">+ Neu</button></div>
+      ${tree.map(cat=>`
+        <div style="padding:10px 16px;border-bottom:.5px solid var(--bd)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:16px">${cat.icon}</span>
+            <span style="font-size:13px;font-weight:600;flex:1">${cat.name}</span>
+            <button class="backbtn" data-newcat-parent="${encodeURIComponent(cat.name)}" style="font-size:11px;padding:3px 8px">+ Sub</button>
+          </div>
+          ${cat.subs.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px;padding-left:24px">${cat.subs.map(s=>`<span style="font-size:11px;background:var(--s2);padding:3px 8px;border-radius:12px;border:.5px solid var(--bd)">${s.icon} ${s.name}</span>`).join('')}</div>`:''}
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="cardhdr"><div class="cardhdr-t">🔒 PIN</div></div>
+      <div style="padding:14px 16px"><button class="btn btn-sec" id="btn-chpin">PIN ändern</button></div>
+    </div>
+    <div class="card">
+      <div class="cardhdr"><div class="cardhdr-t">📊 Daten</div></div>
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:13px;color:var(--t2)">${S.data.statements.length} Kontoauszüge • ${S.data.transactions.length} Buchungen • ${S.rules.length} Lernregeln</div>
+        <button class="btn btn-sec" id="btn-clr" style="border-color:var(--r);color:var(--r)">🗑️ Alle Buchungsdaten löschen</button>
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────
+function rNav(){
+  if(!unlocked())return'';
+  return`<div class="bnav">
+    <button class="nbtn ${S.tab==='home'?'active':''}" id="nav-home"><span class="nbico">📊</span><span>Übersicht</span></button>
+    <button class="nbtn ${S.tab==='analytics'?'active':''}" id="nav-ana"><span class="nbico">📈</span><span>Auswertung</span></button>
+    <button class="nbtn ${S.tab==='upload'?'active':''}" id="nav-up"><span class="nbico">📤</span><span>Hochladen</span></button>
+    <button class="nbtn ${S.tab==='settings'?'active':''}" id="nav-set"><span class="nbico">⚙️</span><span>Einstellungen</span></button>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// DIALOGS
+// ─────────────────────────────────────────────
+function rDlgDel(){return`<div class="overlay" id="ov-del"><div class="dlg"><div class="dlg-title">Kontoauszug löschen?</div><div class="dlg-sub">Alle ${S.confirmDel.txCount} Buchungen werden gelöscht.</div><div class="dlg-btns"><button class="dlg-btn cancel" id="btn-del-no">Abbrechen</button><button class="dlg-btn danger" id="btn-del-yes">Löschen</button></div></div></div>`}
+function rDlgPinReset(){return`<div class="overlay" id="ov-rst"><div class="dlg"><div class="dlg-title">PIN zurücksetzen?</div><div class="dlg-sub">Alle Buchungsdaten werden gelöscht. Der API Key bleibt. Du kannst danach einen neuen PIN festlegen.</div><div class="dlg-btns"><button class="dlg-btn cancel" id="btn-rst-no">Abbrechen</button><button class="dlg-btn danger" id="btn-rst-yes">Zurücksetzen</button></div></div></div>`}
+
+function rDlgReCat(){
+  const tx=S.reTx;
+  const tree=getCatTree();
+  if(S.reStep==='top'){
+    return`<div class="overlay" id="ov-recat"><div class="dlg">
+      <div class="dlg-title">Buchung umkategorisieren</div>
+      <div class="dlg-sub" style="font-size:12px"><strong>${tx.description}</strong><br>${fmt(tx.amount)}<br>Aktuell: ${tx.category} › ${tx.subcategory||tx.category}</div>
+      <div style="margin-bottom:8px">
+        ${tree.map(cat=>`<div class="catpick-item" data-recat-top="${encodeURIComponent(cat.name)}">
+          <div class="catpick-ico">${cat.icon}</div>
+          <div class="catpick-name">${cat.name}</div>
+          ${cat.name===S.reSelTop?'<div class="catpick-check">✓</div>':'<div class="catpick-arrow">›</div>'}
+        </div>`).join('')}
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px;cursor:pointer">
+        <input type="checkbox" id="chk-apply-all" ${S.reApplyAll?'checked':''}>
+        Für alle ähnlichen Buchungen merken ("${tx.description.toLowerCase().split(' ')[0]}")
+      </label>
+      <div class="dlg-btns"><button class="dlg-btn cancel" id="btn-recat-cancel">Abbrechen</button></div>
+    </div></div>`;
+  }
+  if(S.reStep==='sub'){
+    const catNode=tree.find(c=>c.name===S.reSelTop);
+    const subs=catNode?.subs||[];
+    return`<div class="overlay" id="ov-recat"><div class="dlg">
+      <div class="dlg-title">${ico(S.reSelTop)} ${S.reSelTop}</div>
+      <div class="dlg-sub" style="font-size:12px">Unterkategorie wählen oder direkt zuordnen</div>
+      <div style="margin-bottom:8px">
+        <div class="catpick-item" data-recat-sub="${encodeURIComponent(S.reSelTop)}">
+          <div class="catpick-ico">${ico(S.reSelTop)}</div>
+          <div class="catpick-name">${S.reSelTop} (direkt)</div>
+        </div>
+        ${subs.map(sub=>`<div class="catpick-item" data-recat-sub="${encodeURIComponent(sub.name)}">
+          <div class="catpick-ico">${sub.icon}</div>
+          <div class="catpick-name">${sub.name}</div>
+        </div>`).join('')}
+      </div>
+      <div class="dlg-btns"><button class="dlg-btn cancel" id="btn-recat-back">← Zurück</button></div>
+    </div></div>`;
+  }
+}
+
+function rDlgNewCat(){
+  return`<div class="overlay" id="ov-newcat"><div class="dlg">
+    <div class="dlg-title">${S.newCatParent?`Unterkategorie für "${S.newCatParent}"`:'Neue Oberkategorie'}</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      <div>
+        <div class="seclbl" style="margin-bottom:6px">Name</div>
+        <input class="inp" id="newcat-name" placeholder="z.B. Angeln" value="${S.newCatName}">
+      </div>
+      <div>
+        <div class="seclbl" style="margin-bottom:6px">Icon (Emoji)</div>
+        <input class="inp" id="newcat-icon" placeholder="🎣" value="${S.newCatIcon}" style="font-size:20px;text-align:center;width:80px">
+      </div>
+    </div>
+    <div class="dlg-btns">
+      <button class="dlg-btn cancel" id="btn-newcat-cancel">Abbrechen</button>
+      <button class="dlg-btn ok" id="btn-newcat-save">Speichern</button>
+    </div>
+  </div></div>`;
+}
+
+// ─────────────────────────────────────────────
+// ANALYZE PDF
+// ─────────────────────────────────────────────
+async function analyze(){
+  if(!S.pFile)return;
+  S.analyzing=true;S.error=null;render();
+  try{
+    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=()=>rej(new Error('Datei nicht lesbar'));r.readAsDataURL(S.pFile)});
+    const fh=`${S.pFile.name}_${S.pFile.size}_${S.pFile.lastModified}`;
+    if(S.data.statements.find(s=>s.fileHash===fh))throw new Error('Dieser Kontoauszug wurde bereits hochgeladen.');
+    const apiKey=localStorage.getItem(SK.API)||'';
+    if(!apiKey)throw new Error('Kein API Key. Bitte in Einstellungen eintragen.');
+    // Build known rules context for Claude
+    const rulesCtx=S.rules.length?`\nGelernte Zuordnungen (PRIORITÄT — diese immer anwenden):\n${S.rules.map(r=>`"${r.match}" → ${r.category} / ${r.subcategory}`).join('\n')}`:'';
+    const customCatsCtx=S.customCats.length?`\nEigene Kategorien: ${S.customCats.map(c=>`${c.name}${c.parent?` (unter ${c.parent})`:''}`).join(', ')}`:'';
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,messages:[{role:'user',content:[
+        {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+        {type:'text',text:`Extrahiere ALLE Buchungen aus diesem deutschen Kontoauszug.${rulesCtx}${customCatsCtx}
+
+Antworte NUR mit diesem JSON (kein Text, kein Markdown):
+{"endSaldo":1234.56,"transactions":[{"date":"YYYY-MM-DD","description":"max 45 Zeichen","amount":0.0,"category":"...","subcategory":"..."}]}
+
+Verfügbare Kategorien: Essen & Trinken (Supermarkt,Fastfood,Restaurant,Bäckerei,Kantine,Lieferservice), Transport (Tanken,ÖPNV,Parken,Autobahn,Taxi), Shopping (Kleidung,Elektronik,Online-Shopping,Haushalt,Drogerie), Gesundheit (Apotheke,Arzt,Fitness), Freizeit (Streaming,Kino,Bar & Nightlife,Hobbys,Reisen), Wohnen (Miete,Nebenkosten,Versicherung,Internet,GEZ), Finanzen (Sparen,Investitionen,Gebühren,Kredit), Einnahmen (Gehalt,Erstattung,Nebeneinkommen,Sonstige Einnahmen), Sonstiges.
+Positive Beträge=Einnahmen, negative=Ausgaben. endSaldo=Kontostand Ende (null wenn unbekannt).`}
+      ]}]})});
+    if(!resp.ok){let m=`API-Fehler ${resp.status}`;try{const e=await resp.json();m=e.error?.message||m}catch{}throw new Error(m)}
+    const data=await resp.json();
+    const text=data.content.map(c=>c.text||'').join('');
+    let parsed;try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim())}catch{throw new Error('Kontoauszug nicht lesbar. PDF muss Textinhalt haben (kein Scan).')}
+    if(!parsed.transactions||!Array.isArray(parsed.transactions))throw new Error('Unerwartetes Format.');
+    // Apply existing rules to new transactions
+    parsed.transactions.forEach(tx=>{const r=applyRules(tx.description);if(r){tx.category=r.category;tx.subcategory=r.subcategory;}});
+    const sid='s'+Date.now();
+    S.data.statements.push({id:sid,name:S.pName,fileHash:fh,uploadedAt:new Date().toISOString(),txCount:parsed.transactions.length,endSaldo:parsed.endSaldo??null});
+    parsed.transactions.forEach((tx,i)=>S.data.transactions.push({...tx,id:sid+'_'+i,statementId:sid}));
+    sv(SK.DATA,S.data);
+    S.pFile=null;S.pName=null;S.tab='home';S.navStack=[];
+  }catch(e){S.error=e.message}
+  S.analyzing=false;render();
+}
+
+function delStmt(id){S.data.statements=S.data.statements.filter(s=>s.id!==id);S.data.transactions=S.data.transactions.filter(tx=>tx.statementId!==id);sv(SK.DATA,S.data);S.confirmDel=null;render()}
+
+// ─────────────────────────────────────────────
+// RECATEGORIZE
+// ─────────────────────────────────────────────
+function applyRecategorize(topCat,subCat){
+  const tx=S.reTx;
+  const applyAll=S.reApplyAll;
+  const matchWord=tx.description.toLowerCase().split(' ')[0];
+  // Update this transaction
+  tx.category=topCat;
+  tx.subcategory=subCat===topCat?topCat:subCat;
+  tx.manualCat=true;
+  // Apply to all similar if checked
+  if(applyAll){
+    // Add/update rule
+    const existing=S.rules.find(r=>r.match===matchWord);
+    if(existing){existing.category=topCat;existing.subcategory=subCat;}
+    else S.rules.push({match:matchWord,category:topCat,subcategory:subCat});
+    sv(SK.RULES,S.rules);
+    // Apply to all transactions with similar description (not manually set)
+    S.data.transactions.forEach(t=>{
+      if(t.id===tx.id||t.manualCat)return;
+      if(t.description.toLowerCase().includes(matchWord)) {t.category=topCat;t.subcategory=subCat;}
+    });
+  }
+  sv(SK.DATA,S.data);
+  S.reTx=null;S.reStep='top';S.reSelTop=null;render();
+}
+
+// ─────────────────────────────────────────────
+// BIND EVENTS
+// ─────────────────────────────────────────────
+function bindAll(){
+  // Nav
+  const nb=(id,tab)=>document.getElementById(id)?.addEventListener('click',()=>{S.tab=tab;if(tab==='home')S.navStack=[];render()});
+  nb('nav-home','home');nb('nav-ana','analytics');nb('nav-up','upload');nb('nav-set','settings');
+
+  // Home filter
+  document.querySelectorAll('[data-mode]').forEach(el=>el.addEventListener('click',()=>{
+    const m=el.dataset.mode,n=new Date(),cy=n.getFullYear(),cm=n.getMonth()+1;
+    if(m==='month')S.filter={mode:m,year:cy,month:cm};
+    if(m==='year')S.filter={mode:m,year:cy};
+    if(m==='range')S.filter={mode:m,fromYear:cy,fromMonth:1,toYear:cy,toMonth:cm};
+    sv(SK.FILTER,S.filter);render();
+  }));
+  const bs=(id,key,obj)=>document.getElementById(id)?.addEventListener('change',e=>{obj[key]=+e.target.value;sv(SK.FILTER,S.filter);render()});
+  bs('sm','month',S.filter);bs('sy','year',S.filter);bs('sfm','fromMonth',S.filter);bs('sfy','fromYear',S.filter);bs('stm','toMonth',S.filter);bs('sty','toYear',S.filter);
+
+  // Analytics filter
+  document.querySelectorAll('[data-amode]').forEach(el=>el.addEventListener('click',()=>{
+    const m=el.dataset.amode,n=new Date(),cy=n.getFullYear(),cm=n.getMonth()+1;
+    if(m==='month')S.aFilter={mode:m,year:cy,month:cm};
+    if(m==='year')S.aFilter={mode:m,year:cy};
+    if(m==='range')S.aFilter={mode:m,fromYear:cy,fromMonth:1,toYear:cy,toMonth:cm};
+    render();
+  }));
+  const ba=(id,key)=>document.getElementById(id)?.addEventListener('change',e=>{S.aFilter[key]=+e.target.value;render()});
+  ba('am','month');ba('ay','year');ba('afm','fromMonth');ba('afy','fromYear');ba('atm','toMonth');ba('aty','toYear');
+  document.querySelectorAll('[data-acat]').forEach(el=>el.addEventListener('click',()=>{
+    const c=decodeURIComponent(el.dataset.acat),i=S.selCats.indexOf(c);
+    if(i>=0)S.selCats.splice(i,1);else if(S.selCats.length<3)S.selCats.push(c);render();
+  }));
+
+  // Summary cards → categories
+  document.getElementById('card-inc')?.addEventListener('click',()=>{push({view:'categories',viewType:'income'});render()});
+  document.getElementById('card-exp')?.addEventListener('click',()=>{push({view:'categories',viewType:'expense'});render()});
+
+  // Category items → subcategories
+  document.querySelectorAll('[data-cat]').forEach(el=>el.addEventListener('click',()=>{
+    const cn=decodeURIComponent(el.dataset.cat),nav=curNav(),cats=grpBy(getTx(),nav.viewType),cat=cats.find(c=>c.name===cn);
+    if(!cat)return;
+    Object.keys(cat.subs).length>1?push({view:'subcategories',viewType:nav.viewType,viewCat:cn}):push({view:'transactions',viewType:nav.viewType,viewCat:cn,viewSub:Object.keys(cat.subs)[0]});
+    render();
+  }));
+  document.querySelectorAll('[data-sub]').forEach(el=>el.addEventListener('click',()=>{
+    const nav=curNav();push({view:'transactions',viewType:nav.viewType,viewCat:nav.viewCat,viewSub:decodeURIComponent(el.dataset.sub)});render();
+  }));
+  document.getElementById('btn-back')?.addEventListener('click',()=>{pop();render()});
+
+  // TX → recategorize
+  document.querySelectorAll('[data-txid]').forEach(el=>el.addEventListener('click',()=>{
+    const tx=S.data.transactions.find(t=>t.id===el.dataset.txid);
+    if(tx){S.reTx=tx;S.reStep='top';S.reSelTop=null;S.reApplyAll=true;render();}
+  }));
+
+  // Recategorize dialog
+  document.querySelectorAll('[data-recat-top]').forEach(el=>el.addEventListener('click',()=>{
+    S.reSelTop=decodeURIComponent(el.dataset.recatTop);
+    const tree=getCatTree();const cat=tree.find(c=>c.name===S.reSelTop);
+    if(cat&&cat.subs.length===0){applyRecategorize(S.reSelTop,S.reSelTop);}
+    else{S.reStep='sub';render();}
+  }));
+  document.querySelectorAll('[data-recat-sub]').forEach(el=>el.addEventListener('click',()=>{
+    const sub=decodeURIComponent(el.dataset.recatSub);
+    // Read checkbox value before closing
+    const chk=document.getElementById('chk-apply-all');
+    if(chk)S.reApplyAll=chk.checked;
+    applyRecategorize(S.reSelTop,sub);
+  }));
+  document.getElementById('btn-recat-cancel')?.addEventListener('click',()=>{S.reTx=null;render()});
+  document.getElementById('btn-recat-back')?.addEventListener('click',()=>{S.reStep='top';render()});
+  document.getElementById('chk-apply-all')?.addEventListener('change',e=>{S.reApplyAll=e.target.checked});
+  document.getElementById('ov-recat')?.addEventListener('click',e=>{if(e.target.id==='ov-recat'){S.reTx=null;render()}});
+
+  // New category
+  document.getElementById('btn-newcat-top')?.addEventListener('click',()=>{S.showNewCat=true;S.newCatParent=null;S.newCatName='';S.newCatIcon='📋';render()});
+  document.querySelectorAll('[data-newcat-parent]').forEach(el=>el.addEventListener('click',()=>{
+    S.showNewCat=true;S.newCatParent=decodeURIComponent(el.dataset.newcatParent);S.newCatName='';S.newCatIcon='📋';render();
+  }));
+  document.getElementById('btn-newcat-cancel')?.addEventListener('click',()=>{S.showNewCat=false;render()});
+  document.getElementById('btn-newcat-save')?.addEventListener('click',()=>{
+    const name=(document.getElementById('newcat-name')?.value||'').trim();
+    const icon=(document.getElementById('newcat-icon')?.value||'📋').trim();
+    if(!name){alert('Bitte einen Namen eingeben.');return}
+    S.customCats.push({name,icon,parent:S.newCatParent});
+    sv(SK.CATS,S.customCats);
+    S.showNewCat=false;render();
+  });
+  document.getElementById('ov-newcat')?.addEventListener('click',e=>{if(e.target.id==='ov-newcat'){S.showNewCat=false;render()}});
+
+  // Upload
+  const fi=document.getElementById('fi');
+  document.getElementById('btn-sel')?.addEventListener('click',()=>fi?.click());
+  document.getElementById('uzone')?.addEventListener('click',()=>fi?.click());
+  fi?.addEventListener('change',e=>{const f=e.target.files[0];if(f){S.pFile=f;S.pName=f.name;S.error=null;render()}});
+  document.getElementById('btn-ana')?.addEventListener('click',analyze);
+
+  // Delete statement
+  document.querySelectorAll('[data-del]').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation();const stmt=S.data.statements.find(x=>x.id===el.dataset.del);if(stmt){S.confirmDel=stmt;render()}
+  }));
+  document.getElementById('btn-del-no')?.addEventListener('click',()=>{S.confirmDel=null;render()});
+  document.getElementById('btn-del-yes')?.addEventListener('click',()=>{if(S.confirmDel)delStmt(S.confirmDel.id)});
+  document.getElementById('ov-del')?.addEventListener('click',e=>{if(e.target.id==='ov-del'){S.confirmDel=null;render()}});
+
+  // Settings
+  document.getElementById('btn-savekey')?.addEventListener('click',()=>{
+    const v=(document.getElementById('api-inp')?.value||'').trim();
+    if(!v){alert('Bitte Key eingeben');return}
+    if(!v.startsWith('sk-ant-')){alert('Ungültiger Key (muss mit sk-ant- beginnen)');return}
+    localStorage.setItem(SK.API,v);render();
+  });
+  document.getElementById('btn-chpin')?.addEventListener('click',()=>{S.pinMode='setup';S.pinIn='';S.pinFirst='';S.pinErr='';render()});
+  document.getElementById('btn-clr')?.addEventListener('click',()=>{
+    if(confirm('Wirklich alle Buchungen löschen?')){S.data={statements:[],transactions:[]};sv(SK.DATA,S.data);render()}
+  });
+
+  // PIN reset dialog
+  document.getElementById('btn-rst-no')?.addEventListener('click',()=>{S.pinReset=false;render()});
+  document.getElementById('btn-rst-yes')?.addEventListener('click',()=>{clearAll();S.pinReset=false;S.pinMode='setup';S.pinIn='';S.pinFirst='';S.pinErr='';render()});
+  document.getElementById('ov-rst')?.addEventListener('click',e=>{if(e.target.id==='ov-rst'){S.pinReset=false;render()}});
+}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();
+</script>
+</body>
+</html>
